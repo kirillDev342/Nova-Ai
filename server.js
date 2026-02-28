@@ -5,7 +5,7 @@ const cors = require('cors');
 const path = require('path');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
@@ -25,46 +25,76 @@ db.serialize(() => {
     )`);
 });
 
-// Регистрация
+// РЕГИСТРАЦИЯ
 app.post('/api/register', async (req, res) => {
     const { name, email, password } = req.body;
     
+    if (!name || !email || !password) {
+        return res.status(400).json({ error: 'Все поля обязательны' });
+    }
+    
     try {
-        const hashedPassword = await bcrypt.hash(password, 10);
-        
-        db.run('INSERT INTO users (name, email, password) VALUES (?, ?, ?)',
-            [name, email, hashedPassword],
-            function(err) {
-                if (err) {
-                    res.status(400).json({ error: 'Email уже используется' });
-                    return;
-                }
-                res.json({ success: true, message: 'Регистрация успешна!' });
-            });
+        // Проверяем существует ли пользователь
+        db.get('SELECT * FROM users WHERE email = ?', [email], async (err, user) => {
+            if (user) {
+                return res.status(400).json({ error: 'Email уже используется' });
+            }
+            
+            // Хешируем пароль
+            const hashedPassword = await bcrypt.hash(password, 10);
+            
+            // Сохраняем в базу
+            db.run('INSERT INTO users (name, email, password) VALUES (?, ?, ?)',
+                [name, email, hashedPassword],
+                function(err) {
+                    if (err) {
+                        return res.status(500).json({ error: 'Ошибка базы данных' });
+                    }
+                    
+                    res.json({ 
+                        success: true, 
+                        user: { 
+                            id: this.lastID, 
+                            name, 
+                            email 
+                        }
+                    });
+                });
+        });
     } catch (error) {
         res.status(500).json({ error: 'Ошибка сервера' });
     }
 });
 
-// Вход
+// ВХОД
 app.post('/api/login', (req, res) => {
     const { email, password } = req.body;
     
+    if (!email || !password) {
+        return res.status(400).json({ error: 'Email и пароль обязательны' });
+    }
+    
     db.get('SELECT * FROM users WHERE email = ?', [email], async (err, user) => {
+        if (err) {
+            return res.status(500).json({ error: 'Ошибка базы данных' });
+        }
+        
         if (!user) {
-            res.status(401).json({ error: 'Неверный email или пароль' });
-            return;
+            return res.status(401).json({ error: 'Неверный email или пароль' });
         }
         
         const valid = await bcrypt.compare(password, user.password);
         if (!valid) {
-            res.status(401).json({ error: 'Неверный email или пароль' });
-            return;
+            return res.status(401).json({ error: 'Неверный email или пароль' });
         }
         
         res.json({ 
             success: true, 
-            user: { name: user.name, email: user.email }
+            user: { 
+                id: user.id, 
+                name: user.name, 
+                email: user.email 
+            }
         });
     });
 });
