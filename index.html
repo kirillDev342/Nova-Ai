@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NOVA AI · вход в интеллект</title>
+    <title>NOVA AI · высший интеллект</title>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:opsz,wght@14..32,300;14..32,400;14..32,600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
@@ -816,7 +816,7 @@
             </div>
 
             <div class="input-area">
-                <input type="text" id="messageInput" placeholder="Напиши сообщение..." autofocus>
+                <input type="text" id="messageInput" placeholder="Напиши сообщение...">
                 <button onclick="sendMessage()">➤</button>
             </div>
         </div>
@@ -835,7 +835,7 @@
         let currentUser = null;
         let isLoginMode = true;
 
-        // Проверяем есть ли сохраненный пользователь
+        // Проверяем есть ли сохраненный пользователь в localStorage
         const savedUser = localStorage.getItem('nova_user');
         if (savedUser) {
             currentUser = JSON.parse(savedUser);
@@ -895,56 +895,67 @@
             }
         }
 
-async function handleAuth() {
-    const email = document.getElementById('authEmail').value;
-    const password = document.getElementById('authPassword').value;
-    
-    if (!email || !password) {
-        alert('Заполните все поля');
-        return;
-    }
-
-    const url = isLoginMode ? '/api/login' : '/api/register';
-    const body = isLoginMode 
-        ? { email, password }
-        : { 
-            name: document.getElementById('regName').value, 
-            email, 
-            password 
-        };
-
-    if (!isLoginMode && !body.name) {
-        alert('Введите имя');
-        return;
-    }
-
-    try {
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(body)
-        });
-
-        const data = await response.json();
-
-        if (data.error) {
-            alert(data.error);
-        } else {
-            currentUser = data.user;
-            localStorage.setItem('nova_user', JSON.stringify(data.user));
-            document.getElementById('userInfo').classList.remove('hidden');
-            document.getElementById('logoutBtn').classList.remove('hidden');
-            document.getElementById('userInfo').textContent = `👤 ${data.user.name}`;
+        function handleAuth() {
+            const email = document.getElementById('authEmail').value;
+            const password = document.getElementById('authPassword').value;
             
-            alert(isLoginMode ? 'Вход выполнен!' : 'Регистрация успешна!');
-            showSection('chat');
+            if (!email || !password) {
+                alert('Заполните все поля');
+                return;
+            }
+
+            // Используем localStorage для хранения пользователей
+            let users = JSON.parse(localStorage.getItem('nova_users')) || [];
+
+            if (isLoginMode) {
+                // Вход
+                const user = users.find(u => u.email === email && u.password === password);
+                
+                if (user) {
+                    currentUser = user;
+                    localStorage.setItem('nova_user', JSON.stringify(user));
+                    document.getElementById('userInfo').classList.remove('hidden');
+                    document.getElementById('logoutBtn').classList.remove('hidden');
+                    document.getElementById('userInfo').textContent = `👤 ${user.name}`;
+                    alert('Вход выполнен успешно!');
+                    showSection('chat');
+                } else {
+                    alert('Неверный email или пароль');
+                }
+            } else {
+                // Регистрация
+                const name = document.getElementById('regName').value;
+                if (!name) {
+                    alert('Введите имя');
+                    return;
+                }
+
+                if (users.find(u => u.email === email)) {
+                    alert('Пользователь с таким email уже существует');
+                    return;
+                }
+
+                const newUser = { 
+                    name, 
+                    email, 
+                    password, 
+                    id: Date.now() 
+                };
+                
+                users.push(newUser);
+                localStorage.setItem('nova_users', JSON.stringify(users));
+                
+                currentUser = newUser;
+                localStorage.setItem('nova_user', JSON.stringify(newUser));
+                
+                document.getElementById('userInfo').classList.remove('hidden');
+                document.getElementById('logoutBtn').classList.remove('hidden');
+                document.getElementById('userInfo').textContent = `👤 ${name}`;
+                
+                alert('Регистрация успешна!');
+                showSection('chat');
+            }
         }
-    } catch (error) {
-        alert('Ошибка соединения с сервером');
-    }
-}
 
         function logout() {
             currentUser = null;
@@ -1027,7 +1038,9 @@ async function handleAuth() {
         }
 
         document.getElementById('messageInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') sendMessage();
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
         });
     </script>
 </body>
