@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NOVA AI · высший интеллект</title>
+    <title>NOVA AI · вход в интеллект</title>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:opsz,wght@14..32,300;14..32,400;14..32,600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
@@ -126,6 +126,27 @@
         .nav-links a.active {
             color: #FFD700;
             border-bottom: 1px solid #FFD700;
+        }
+
+        #userInfo {
+            color: #FFD700;
+            font-size: 0.9rem;
+            margin-right: 1rem;
+        }
+
+        .logout-btn {
+            background: transparent;
+            border: 1px solid #FFD700;
+            color: #FFD700;
+            padding: 0.5rem 1.5rem;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 215, 0, 0.1);
         }
 
         /* ЗАСТАВКА */
@@ -442,7 +463,7 @@
             transform: scale(1.1);
         }
 
-        /* ЧАТ - ОБНОВЛЕННЫЙ ДИЗАЙН */
+        /* ЧАТ */
         .chat-section {
             min-height: 100vh;
             display: none;
@@ -504,7 +525,6 @@
             background: #1a1a1a;
         }
 
-        /* КРАСИВЫЙ СКРОЛЛБАР */
         .messages-container {
             height: 400px;
             overflow-y: auto;
@@ -512,7 +532,6 @@
             margin-bottom: 1.5rem;
         }
 
-        /* Стилизация скроллбара */
         .messages-container::-webkit-scrollbar {
             width: 6px;
         }
@@ -526,11 +545,6 @@
             background: linear-gradient(135deg, #FFD700, #D4AF37);
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
-        }
-
-        .messages-container::-webkit-scrollbar-thumb:hover {
-            background: linear-gradient(135deg, #FFD700, #FFD700);
-            box-shadow: 0 0 15px #FFD700;
         }
 
         .messages {
@@ -706,6 +720,8 @@
             <a onclick="showSection('auth')" id="nav-auth">Вход</a>
             <a onclick="showSection('chat')" id="nav-chat">Чат</a>
         </div>
+        <div id="userInfo" class="hidden"></div>
+        <button class="logout-btn hidden" id="logoutBtn" onclick="logout()">Выйти</button>
     </nav>
 
     <!-- ЗАСТАВКА -->
@@ -719,7 +735,7 @@
             </div>
             <div class="cta-group">
                 <button class="btn btn-primary" onclick="startJourney()">Начать</button>
-                <button class="btn btn-outline" onclick="showSection('chat')">Демо</button>
+                <button class="btn btn-outline" onclick="showSection('auth')">Вход</button>
             </div>
         </div>
         <div class="partners-strip">
@@ -733,30 +749,25 @@
         </div>
     </section>
 
-    <!-- РЕГИСТРАЦИЯ -->
+    <!-- РЕГИСТРАЦИЯ/ВХОД -->
     <section class="auth-section" id="authSection">
         <div class="glass-reg-card">
             <div class="logo-crystal">
                 <span>N</span>
             </div>
-            <h2 style="text-align:center; font-size:2rem;">ДОБРО ПОЖАЛОВАТЬ</h2>
-            <div class="subhead" style="text-align:center;">Начните работу с NOVA AI</div>
+            <h2 style="text-align:center; font-size:2rem;" id="authTitle">ВХОД В СИСТЕМУ</h2>
+            <div class="subhead" style="text-align:center;" id="authSubtitle">Войдите в свой аккаунт</div>
 
-            <form class="reg-form" onsubmit="handleRegister(event)">
-                <input type="text" class="input-field" placeholder="Имя" required>
-                <input type="email" class="input-field" placeholder="Email" required>
-                <input type="password" class="input-field" placeholder="Пароль" required>
+            <div class="reg-form">
+                <input type="text" class="input-field hidden" id="regName" placeholder="Имя">
+                <input type="email" class="input-field" id="authEmail" placeholder="Email" required>
+                <input type="password" class="input-field" id="authPassword" placeholder="Пароль" required>
 
-                <div class="checkbox-wrap">
-                    <input type="checkbox" id="terms" checked>
-                    <label for="terms">Я принимаю <a href="#">условия</a></label>
-                </div>
-
-                <button type="submit" class="btn-gold">СОЗДАТЬ АККАУНТ</button>
-            </form>
+                <button class="btn-gold" id="authSubmitBtn" onclick="handleAuth()">ВОЙТИ</button>
+            </div>
 
             <div class="login-link" style="text-align:center; margin:1.2rem 0;">
-                <a href="#" onclick="showSection('chat'); return false;" style="color:#E0E0E0;">Уже есть аккаунт? Войти</a>
+                <a href="#" id="authSwitch" onclick="toggleAuthMode()">Нет аккаунта? Зарегистрироваться</a>
             </div>
 
             <div class="divider">
@@ -773,16 +784,16 @@
         </div>
     </section>
 
-    <!-- ЧАТ С GPT -->
+    <!-- ЧАТ -->
     <section class="chat-section" id="chatSection">
         <div class="chat-container">
             <div class="chat-header">
                 <button class="back-btn" onclick="showSection('hero')">← Назад</button>
                 <h2 style="color:#FFD700;">NOVA AI</h2>
                 <select class="model-selector" id="modelSelect">
-                    <option value="openai/gpt-3.5-turbo">🤖 GPT-3.5 Turbo (умный)</option>
-                    <option value="mistralai/mistral-7b-instruct">🌌 Mistral 7B (бесплатно)</option>
-                    <option value="meta-llama/llama-3-8b-instruct">✨ Llama 3 (бесплатно)</option>
+                    <option value="openai/gpt-3.5-turbo">🤖 GPT-3.5 Turbo</option>
+                    <option value="mistralai/mistral-7b-instruct">🌌 Mistral 7B</option>
+                    <option value="meta-llama/llama-3-8b-instruct">✨ Llama 3</option>
                 </select>
             </div>
 
@@ -792,7 +803,7 @@
                         <div class="avatar bot-avatar">✦</div>
                         <div class="bubble">
                             Я — жидкий интеллект NOVA.<br>
-                            Спроси меня о чём угодно. Я пишу код, отвечаю на вопросы, решаю задачи.
+                            Спроси меня о чём угодно.
                         </div>
                     </div>
                 </div>
@@ -821,6 +832,17 @@
         let chatMessages = [
             { role: "system", content: "Ты NOVA — жидкий интеллект. Отвечай на русском языке, будь полезным. Ты умеешь писать код, объяснять сложные вещи, решать задачи." }
         ];
+        let currentUser = null;
+        let isLoginMode = true;
+
+        // Проверяем есть ли сохраненный пользователь
+        const savedUser = localStorage.getItem('nova_user');
+        if (savedUser) {
+            currentUser = JSON.parse(savedUser);
+            document.getElementById('userInfo').classList.remove('hidden');
+            document.getElementById('logoutBtn').classList.remove('hidden');
+            document.getElementById('userInfo').textContent = `👤 ${currentUser.name}`;
+        }
 
         function showSection(section) {
             document.getElementById('heroSection').classList.add('hidden');
@@ -836,6 +858,11 @@
                 document.getElementById('authSection').classList.add('visible');
                 document.getElementById('nav-auth').classList.add('active');
             } else if (section === 'chat') {
+                if (!currentUser) {
+                    alert('Сначала войдите в систему');
+                    showSection('auth');
+                    return;
+                }
                 document.getElementById('chatSection').classList.add('visible');
                 document.getElementById('nav-chat').classList.add('active');
             }
@@ -845,10 +872,86 @@
             showSection('auth');
         }
 
-        function handleRegister(e) {
-            e.preventDefault();
-            alert('Аккаунт создан! Добро пожаловать в NOVA AI.');
+        function toggleAuthMode() {
+            isLoginMode = !isLoginMode;
+            const title = document.getElementById('authTitle');
+            const subtitle = document.getElementById('authSubtitle');
+            const nameField = document.getElementById('regName');
+            const submitBtn = document.getElementById('authSubmitBtn');
+            const switchLink = document.getElementById('authSwitch');
+
+            if (isLoginMode) {
+                title.textContent = 'ВХОД В СИСТЕМУ';
+                subtitle.textContent = 'Войдите в свой аккаунт';
+                nameField.classList.add('hidden');
+                submitBtn.textContent = 'ВОЙТИ';
+                switchLink.textContent = 'Нет аккаунта? Зарегистрироваться';
+            } else {
+                title.textContent = 'РЕГИСТРАЦИЯ';
+                subtitle.textContent = 'Создайте новый аккаунт';
+                nameField.classList.remove('hidden');
+                submitBtn.textContent = 'СОЗДАТЬ АККАУНТ';
+                switchLink.textContent = 'Уже есть аккаунт? Войти';
+            }
+        }
+
+async function handleAuth() {
+    const email = document.getElementById('authEmail').value;
+    const password = document.getElementById('authPassword').value;
+    
+    if (!email || !password) {
+        alert('Заполните все поля');
+        return;
+    }
+
+    const url = isLoginMode ? '/api/login' : '/api/register';
+    const body = isLoginMode 
+        ? { email, password }
+        : { 
+            name: document.getElementById('regName').value, 
+            email, 
+            password 
+        };
+
+    if (!isLoginMode && !body.name) {
+        alert('Введите имя');
+        return;
+    }
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(body)
+        });
+
+        const data = await response.json();
+
+        if (data.error) {
+            alert(data.error);
+        } else {
+            currentUser = data.user;
+            localStorage.setItem('nova_user', JSON.stringify(data.user));
+            document.getElementById('userInfo').classList.remove('hidden');
+            document.getElementById('logoutBtn').classList.remove('hidden');
+            document.getElementById('userInfo').textContent = `👤 ${data.user.name}`;
+            
+            alert(isLoginMode ? 'Вход выполнен!' : 'Регистрация успешна!');
             showSection('chat');
+        }
+    } catch (error) {
+        alert('Ошибка соединения с сервером');
+    }
+}
+
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('nova_user');
+            document.getElementById('userInfo').classList.add('hidden');
+            document.getElementById('logoutBtn').classList.add('hidden');
+            showSection('hero');
         }
 
         async function sendMessage() {
@@ -919,7 +1022,6 @@
             
             messagesDiv.appendChild(messageDiv);
             
-            // Автоскролл вниз
             const container = document.getElementById('messagesContainer');
             container.scrollTop = container.scrollHeight;
         }
